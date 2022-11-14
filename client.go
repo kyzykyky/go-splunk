@@ -1,4 +1,4 @@
-package splunk
+package gosplunk
 
 import (
 	"crypto/tls"

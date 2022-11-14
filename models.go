@@ -1,4 +1,4 @@
-package splunk
+package gosplunk
 
 type auth struct {
 	SessionKey string          `json:"sessionKey"`

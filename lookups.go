@@ -1,4 +1,4 @@
-package splunk
+package gosplunk
 
 func (c Client) RetrieveLookup(search string) ([]map[string]interface{}, error) {
 	lookupSearch := NewSearch{
