@@ -4,7 +4,14 @@ import (
 	"errors"
 )
 
-var ErrGeneral = errors.New("unknown error")
+type ErrGeneral struct {
+	User string
+}
+
+func (e ErrGeneral) Error() string {
+	return "unknown error"
+}
+
 var ErrEmptyCredentials error = errors.New("empty credentials")
 var ErrAuthFailed error = errors.New("authentication failed")
 var ErrRequest = errors.New("request error")
@@ -37,7 +44,8 @@ func (c Client) requestError(status int) error {
 		c.Logger.Errorw("action failed", "user", c.Username)
 		return ErrFailedAction
 	default:
-		c.Logger.Errorw("unknown error", "user", c.Username)
-		return ErrGeneral
+		err := ErrGeneral{User: c.Username}
+		c.Logger.Errorw(err, "user", c.Username)
+		return err
 	}
 }

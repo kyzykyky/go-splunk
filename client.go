@@ -1,16 +1,10 @@
 package gosplunk
 
 import (
-	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
-	"strconv"
-	"strings"
-
-	"github.com/kyzykyky/go-splunk/logger"
 )
 
 type ClientConfig struct {
@@ -20,7 +14,7 @@ type ClientConfig struct {
 	Password      string
 	Token         string
 	EnableLogging bool
-	Logger        logger.Logger
+	Logger        Logger
 }
 
 type Client struct {
@@ -28,7 +22,7 @@ type Client struct {
 	Roles []string
 }
 
-func NewClient(c ClientConfig) Client {
+func NewClient(c ClientConfig) (Client, error) {
 	C := Client{
 		ClientConfig: c,
 	}
@@ -36,10 +30,10 @@ func NewClient(c ClientConfig) Client {
 		C.Host = os.Getenv("SPLUNK_HOST")
 	}
 	if c.Username == "" {
-		C.Username = os.Getenv("SPLUNK_USER")
+		C.Username = os.Getenv("SPLUNK_ADMIN_USERNAME")
 	}
 	if c.Password == "" {
-		C.Password = os.Getenv("SPLUNK_PASSWORD")
+		C.Password = os.Getenv("SPLUNK_ADMIN_PASSWORD")
 	}
 	if c.App == "" {
 		C.App = os.Getenv("SPLUNK_APP")
@@ -47,94 +41,96 @@ func NewClient(c ClientConfig) Client {
 	if c.Token == "" {
 		C.Token = os.Getenv("SPLUNK_TOKEN")
 		if C.Token == "" {
-			err := Auth(&C)
-			if err != nil {
-				panic(err)
+			st, err := Auth(&C)
+			if err != nil || st == "" {
+				return C, err
 			}
+			C.Token = st
 		}
 	}
 	if !c.EnableLogging {
-		c.Logger = logger.NoLogger{}
+		c.Logger = NoLogger{}
 	}
 	if err := C.Ping(); err != nil {
-		panic(err)
+		return C, err
 	}
-	return C
+	return C, nil
 }
 
-func Auth(c *Client) error {
-	if c.Username == "" || c.Password == "" {
-		return ErrEmptyCredentials
+// Create request as another client
+func (c *Client) SubClient(user, token string) Client {
+	return Client{
+		ClientConfig: ClientConfig{
+			Host:          c.Host,
+			App:           c.App,
+			Username:      user,
+			Token:         token,
+			EnableLogging: c.EnableLogging,
+			Logger:        c.Logger,
+		},
 	}
-	resource := "/services/auth/login"
+}
 
-	params := url.Values{}
-	params.Add("output_mode", "json")
+func Auth(c *Client) (string, error) {
+	login := Login{
+		Username: c.Username,
+		Password: c.Password,
+	}
+	if login.Username == "" || login.Password == "" {
+		return "", ErrEmptyCredentials
+	}
 
-	data := url.Values{}
-	data.Set("username", c.Username)
-	data.Set("password", c.Password)
-
-	u, _ := url.ParseRequestURI(c.Host)
-	u.Path = resource
-	u.RawQuery = params.Encode()
-	urlStr := u.String()
-
-	client := &http.Client{Transport: &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}}
-	request, _ := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(data.Encode()))
-
-	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	request.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
-	response, err := client.Do(request)
-	// TODO: Better error handling
+	request, err := c.requestBuilder(http.MethodPost, false, "/services/auth/login", url.Values{}, login.setBody())
 	if err != nil {
 		c.Logger.Error(err)
-		return ErrRequest
-	} else if response.StatusCode >= 400 {
-		c.Logger.Info(ErrAuthFailed)
-		return ErrAuthFailed
+		return "", ErrRequest
+	}
+
+	response, err := getHttpClient().Do(request)
+	// TODO: Better error handling
+	if err != nil {
+		c.Logger.Error(err, "user", login.Username)
+		return "", ErrRequest
 	}
 	defer response.Body.Close()
+
+	if response.StatusCode >= 400 {
+		c.Logger.Infow(ErrAuthFailed, "status", response.StatusCode, "user", login.Username)
+		stresp, err := responseReader(response)
+		if err == nil {
+			c.Logger.Debug(stresp)
+		}
+		return "", ErrAuthFailed
+	}
 
 	authresp := auth{}
 	err = json.NewDecoder(response.Body).Decode(&authresp)
 	if err != nil {
 		c.Logger.Error(err)
-		return ErrInvalidResponse
+		return "", ErrInvalidResponse
 	}
 	if authresp.SessionKey != "" {
-		c.Token = authresp.SessionKey
-		return nil
+		return authresp.SessionKey, nil
 	} else {
 		c.Logger.Warnw(ErrAuthFailed.Error(), "response", authresp.Messages[0].Text)
-		return ErrAuthFailed
+		return "", ErrAuthFailed
 	}
 }
 
 func (c Client) Ping() error {
-	resource := "/services/server/info"
-
-	params := url.Values{}
-	data := url.Values{}
-
-	u, _ := url.ParseRequestURI(c.Host)
-	u.Path = resource
-	u.RawQuery = params.Encode()
-	urlStr := u.String()
-
-	client := &http.Client{Transport: &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}}
-	request, _ := http.NewRequest(http.MethodGet, urlStr, strings.NewReader(data.Encode()))
-
-	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.Token))
-	response, err := client.Do(request)
+	request, err := c.requestBuilder(http.MethodGet, false, "/services/server/info", url.Values{}, url.Values{})
 	if err != nil {
 		c.Logger.Error(err)
 		return ErrRequest
-	} else if response.StatusCode >= 400 {
+	}
+	response, err := getHttpClient().Do(request)
+	if err != nil {
+		c.Logger.Error(err)
+		return ErrRequest
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode >= 400 {
 		c.Logger.Info(ErrAuthFailed)
 		return ErrAuthFailed
 	}

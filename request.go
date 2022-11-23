@@ -19,8 +19,10 @@ func getHttpClient() *http.Client {
 }
 
 // Build common request for diffrent methods and users
-func (c Client) requestBuilder(method string, resource string, query url.Values, body url.Values) (*http.Request, error) {
-	resource = c.getResourcePrefix() + resource
+func (c Client) requestBuilder(method string, useNs bool, resource string, query url.Values, body url.Values) (*http.Request, error) {
+	if useNs {
+		resource = c.getResourcePrefix() + resource
+	}
 
 	// Add default output_mode to query params
 	query.Add("output_mode", "json")
@@ -45,8 +47,19 @@ func (c Client) requestBuilder(method string, resource string, query url.Values,
 		request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		request.Header.Add("Content-Length", strconv.Itoa(len(endcodedBody)))
 	}
-	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+	if c.Token != "" {
+		request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+	}
 	return request, nil
+}
+
+func responseReader(response *http.Response) (string, error) {
+	body := make([]byte, response.ContentLength)
+	_, err := response.Body.Read(body)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
 }
 
 // Struct - url.Values converter
@@ -74,4 +87,11 @@ func (jr SearchJobResultsRetrieve) setQuery() url.Values {
 	params.Add("offset", strconv.Itoa(jr.Offset))
 	params.Add("count", strconv.Itoa(jr.Count))
 	return params
+}
+
+func (login Login) setBody() url.Values {
+	data := url.Values{}
+	data.Set("username", login.Username)
+	data.Set("password", login.Password)
+	return data
 }

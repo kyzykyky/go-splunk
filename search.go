@@ -11,7 +11,7 @@ import (
 )
 
 func (c Client) Search(search NewSearch) (SearchJob, error) {
-	request, err := c.requestBuilder(http.MethodPost, "/search/jobs", url.Values{}, search.setBody())
+	request, err := c.requestBuilder(http.MethodPost, true, "/search/jobs", url.Values{}, search.setBody())
 	if err != nil {
 		c.Logger.Error(err)
 		return SearchJob{}, ErrRequest
@@ -20,10 +20,16 @@ func (c Client) Search(search NewSearch) (SearchJob, error) {
 	if err != nil {
 		c.Logger.Error(err)
 		return SearchJob{}, ErrRequest
-	} else if response.StatusCode >= 400 {
-		return SearchJob{}, c.requestError(response.StatusCode)
 	}
 	defer response.Body.Close()
+
+	if response.StatusCode >= 400 {
+		stresp, err := responseReader(response)
+		if err == nil {
+			c.Logger.Debug(stresp)
+		}
+		return SearchJob{}, c.requestError(response.StatusCode)
+	}
 
 	var j SearchJob
 	err = json.NewDecoder(response.Body).Decode(&j)
@@ -36,7 +42,7 @@ func (c Client) Search(search NewSearch) (SearchJob, error) {
 
 // Get job status and info
 func (c Client) JobRetrieve(job string) (JobInfo, error) {
-	request, err := c.requestBuilder(http.MethodGet, fmt.Sprintf("/search/jobs/%s", job), url.Values{}, url.Values{})
+	request, err := c.requestBuilder(http.MethodGet, true, fmt.Sprintf("/search/jobs/%s", job), url.Values{}, url.Values{})
 	if err != nil {
 		c.Logger.Error(err)
 		return JobInfo{}, ErrRequest
@@ -45,10 +51,16 @@ func (c Client) JobRetrieve(job string) (JobInfo, error) {
 	if err != nil {
 		c.Logger.Error(err)
 		return JobInfo{}, ErrRequest
-	} else if response.StatusCode >= 400 {
-		return JobInfo{}, c.requestError(response.StatusCode)
 	}
 	defer response.Body.Close()
+
+	if response.StatusCode >= 400 {
+		stresp, err := responseReader(response)
+		if err == nil {
+			c.Logger.Debug(stresp)
+		}
+		return JobInfo{}, c.requestError(response.StatusCode)
+	}
 
 	results := make(map[string]interface{})
 	if err := json.NewDecoder(response.Body).Decode(&results); err != nil {
@@ -102,7 +114,7 @@ func (c Client) JobAwait(job string, retries int) (JobInfo, error) {
 
 // Get results of job (max 100)
 func (c Client) JobResults(job SearchJobResultsRetrieve) (JobResults, error) {
-	request, err := c.requestBuilder(http.MethodGet, fmt.Sprintf("/search/jobs/%s/results", job.Job),
+	request, err := c.requestBuilder(http.MethodGet, true, fmt.Sprintf("/search/jobs/%s/results", job.Job),
 		job.setQuery(), url.Values{})
 	if err != nil {
 		c.Logger.Error(err)
@@ -113,10 +125,16 @@ func (c Client) JobResults(job SearchJobResultsRetrieve) (JobResults, error) {
 	if err != nil {
 		c.Logger.Error(err)
 		return JobResults{}, ErrRequest
-	} else if response.StatusCode >= 400 {
-		return JobResults{}, c.requestError(response.StatusCode)
 	}
 	defer response.Body.Close()
+
+	if response.StatusCode >= 400 {
+		stresp, err := responseReader(response)
+		if err == nil {
+			c.Logger.Debug(stresp)
+		}
+		return JobResults{}, c.requestError(response.StatusCode)
+	}
 	results := make(map[string]interface{})
 	err = json.NewDecoder(response.Body).Decode(&results)
 	if err != nil {
@@ -142,7 +160,7 @@ func (c Client) JobResults(job SearchJobResultsRetrieve) (JobResults, error) {
 }
 
 func (c Client) SearchExport(search NewSearch) ([]ExportJobResults, error) {
-	request, err := c.requestBuilder(http.MethodPost, "/search/jobs/export",
+	request, err := c.requestBuilder(http.MethodPost, true, "/search/jobs/export",
 		url.Values{}, search.setBody())
 	if err != nil {
 		c.Logger.Error(err)
@@ -152,10 +170,16 @@ func (c Client) SearchExport(search NewSearch) ([]ExportJobResults, error) {
 	if err != nil {
 		c.Logger.Error(err)
 		return []ExportJobResults{}, ErrRequest
-	} else if response.StatusCode >= 400 {
-		return []ExportJobResults{}, c.requestError(response.StatusCode)
 	}
 	defer response.Body.Close()
+
+	if response.StatusCode >= 400 {
+		stresp, err := responseReader(response)
+		if err == nil {
+			c.Logger.Debug(stresp)
+		}
+		return []ExportJobResults{}, c.requestError(response.StatusCode)
+	}
 	bodyBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		c.Logger.Error(err)

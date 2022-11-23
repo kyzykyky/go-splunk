@@ -5,9 +5,9 @@ import "fmt"
 func (c Client) getResourcePrefix() string {
 	if c.App == "" && c.Username == "" {
 		return "/services"
-	} else if c.App == "" {
+	} else if c.App == "" && c.Username != "" {
 		return fmt.Sprintf("/servicesNS/%s/search", c.Username)
-	} else if c.Username == "" {
+	} else if c.Username == "" && c.App != "" {
 		return fmt.Sprintf("/servicesNS/-/%s", c.App)
 	} else {
 		return fmt.Sprintf("/servicesNS/%s/%s", c.Username, c.App)
