@@ -13,6 +13,11 @@ type errorMessages struct {
 	Text string `json:"text"`
 }
 
+type NameSpace struct {
+	App  string
+	User string
+}
+
 type Login struct {
 	Username string
 	Password string

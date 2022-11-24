@@ -3,14 +3,18 @@ package gosplunk
 import "fmt"
 
 func (c Client) getResourcePrefix() string {
-	if c.App == "" && c.Username == "" {
+	return getResourcePrefix(NameSpace{c.App, c.Username})
+}
+
+func getResourcePrefix(ns NameSpace) string {
+	if ns.App == "" && ns.User == "" {
 		return "/services"
-	} else if c.App == "" && c.Username != "" {
-		return fmt.Sprintf("/servicesNS/%s/search", c.Username)
-	} else if c.Username == "" && c.App != "" {
-		return fmt.Sprintf("/servicesNS/-/%s", c.App)
+	} else if ns.App == "" && ns.User != "" {
+		return fmt.Sprintf("/servicesNS/%s/search", ns.User)
+	} else if ns.User == "" && ns.App != "" {
+		return fmt.Sprintf("/servicesNS/nobody/%s", ns.App)
 	} else {
-		return fmt.Sprintf("/servicesNS/%s/%s", c.Username, c.App)
+		return fmt.Sprintf("/servicesNS/%s/%s", ns.User, ns.App)
 	}
 }
 

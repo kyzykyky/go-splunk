@@ -58,7 +58,26 @@ func NewClient(c ClientConfig) (Client, error) {
 }
 
 // Create request as another client
-func (c *Client) SubClient(user, token string) Client {
+func (c *Client) SubClientByPass(user, password string) Client {
+	auth, err := c.UserAuth(Login{user, password})
+	if err != nil {
+		c.Logger.Errorw(err.Error(), "user", user)
+		return Client{}
+	}
+	return Client{
+		ClientConfig: ClientConfig{
+			Host:          c.Host,
+			App:           c.App,
+			Username:      auth.Username,
+			Password:      password,
+			Token:         auth.Token,
+			EnableLogging: c.EnableLogging,
+			Logger:        c.Logger,
+		},
+	}
+}
+
+func (c *Client) SubClientByToken(user, token string) Client {
 	return Client{
 		ClientConfig: ClientConfig{
 			Host:          c.Host,
@@ -95,7 +114,7 @@ func Auth(c *Client) (string, error) {
 	defer response.Body.Close()
 
 	if response.StatusCode >= 400 {
-		c.Logger.Infow(ErrAuthFailed, "status", response.StatusCode, "user", login.Username)
+		c.Logger.Infow(ErrAuthFailed.Error(), "status", response.StatusCode, "user", login.Username)
 		stresp, err := responseReader(response)
 		if err == nil {
 			c.Logger.Debug(stresp)

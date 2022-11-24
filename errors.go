@@ -19,6 +19,7 @@ var ErrInvalidRequest error = errors.New("invalid request")
 var ErrInvalidResponse error = errors.New("invalid response")
 var ErrFailedAction error = errors.New("failed action")
 var ErrForbiddenAction error = errors.New("forbidden action")
+var ErrConflict error = errors.New("conflict")
 
 var ErrJobNotFound error = errors.New("job not found")
 
@@ -40,12 +41,15 @@ func (c Client) requestError(status int) error {
 	case 405:
 		c.Logger.Errorw("method not allowed", "user", c.Username)
 		return ErrInvalidRequest
+	case 409:
+		c.Logger.Warnw("conflict", "user", c.Username)
+		return ErrConflict
 	case 500:
 		c.Logger.Errorw("action failed", "user", c.Username)
 		return ErrFailedAction
 	default:
 		err := ErrGeneral{User: c.Username}
-		c.Logger.Errorw(err, "user", c.Username)
+		c.Logger.Errorw(err.Error(), "user", c.Username, "status", status)
 		return err
 	}
 }

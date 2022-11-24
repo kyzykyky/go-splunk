@@ -143,7 +143,7 @@ func (c *Client) UserInfo(username string) (User, error) {
 }
 
 func (c *Client) UsersInfo() (map[string]User, error) {
-	res, err := c.RetrieveLookup("| rest /services/authentication/users splunk_server=local | table title realname roles")
+	res, err := c.LookupRetrieve("| rest /services/authentication/users splunk_server=local | table title realname roles")
 	if err != nil {
 		return nil, err
 	}

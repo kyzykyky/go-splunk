@@ -3,6 +3,7 @@ package gosplunk
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -53,26 +54,14 @@ func (c Client) requestBuilder(method string, useNs bool, resource string, query
 	return request, nil
 }
 
-func responseReader(response *http.Response) (string, error) {
+func responseReader(response *http.Response) ([]byte, error) {
 	body := make([]byte, response.ContentLength)
-	_, err := response.Body.Read(body)
+	_, err := io.ReadFull(response.Body, body)
 	if err != nil {
-		return "", err
+		return []byte{}, err
 	}
-	return string(body), nil
+	return body, nil
 }
-
-// Struct - url.Values converter
-// type urlValues interface {
-// 	queryValues
-// 	bodyValues
-// }
-// type queryValues interface {
-// 	setQuery() url.Values
-// }
-// type bodyValues interface {
-// 	setBody() url.Values
-// }
 
 func (search NewSearch) setBody() url.Values {
 	data := url.Values{}
@@ -93,5 +82,40 @@ func (login Login) setBody() url.Values {
 	data := url.Values{}
 	data.Set("username", login.Username)
 	data.Set("password", login.Password)
+	return data
+}
+
+func (savedSearch SavedSearch) setBody() url.Values {
+	data := url.Values{}
+	if savedSearch.Name != "" {
+		data.Set("name", savedSearch.Name)
+	}
+	if savedSearch.DisabledString != "" {
+		data.Set("disabled", savedSearch.DisabledString)
+	}
+	if savedSearch.IsScheduledString != "" {
+		data.Set("is_scheduled", savedSearch.IsScheduledString)
+	}
+	if savedSearch.Cron != "" {
+		data.Set("cron_schedule", savedSearch.Cron)
+	}
+	if savedSearch.Description != "" {
+		data.Set("description", savedSearch.Description)
+	}
+	if savedSearch.Search != "" {
+		data.Set("search", savedSearch.Search)
+	}
+	if savedSearch.EarliestTime != "" {
+		data.Set("dispatch.earliest_time", savedSearch.EarliestTime)
+	}
+	if savedSearch.LatestTime != "" {
+		data.Set("dispatch.latest_time", savedSearch.LatestTime)
+	}
+	if savedSearch.RunOnStartupString != "" {
+		data.Set("run_on_startup", savedSearch.RunOnStartupString)
+	}
+	if savedSearch.NextScheduledTime != "" {
+		data.Set("next_scheduled_time", savedSearch.NextScheduledTime)
+	}
 	return data
 }
