@@ -4,24 +4,18 @@ import (
 	"errors"
 )
 
-type ErrGeneral struct {
-	User string
-}
+// TODO: Specify error types as structs implementing the error interface
 
-func (e ErrGeneral) Error() string {
-	return "unknown error"
-}
-
-var ErrEmptyCredentials error = errors.New("empty credentials")
-var ErrAuthFailed error = errors.New("authentication failed")
+var ErrGeneral = errors.New("general error")
+var ErrEmptyCredentials = errors.New("empty credentials")
+var ErrAuthFailed = errors.New("authentication failed")
 var ErrRequest = errors.New("request error")
-var ErrInvalidRequest error = errors.New("invalid request")
-var ErrInvalidResponse error = errors.New("invalid response")
-var ErrFailedAction error = errors.New("failed action")
-var ErrForbiddenAction error = errors.New("forbidden action")
-var ErrConflict error = errors.New("conflict")
-
-var ErrJobNotFound error = errors.New("job not found")
+var ErrInvalidRequest = errors.New("invalid request")
+var ErrInvalidResponse = errors.New("invalid response")
+var ErrFailedAction = errors.New("failed action")
+var ErrForbiddenAction = errors.New("forbidden action")
+var ErrConflict = errors.New("conflict")
+var ErrNotFound = errors.New("object not found")
 
 func (c Client) requestError(status int) error {
 	switch status {
@@ -37,7 +31,7 @@ func (c Client) requestError(status int) error {
 		c.Logger.Warnw("action forbidden", "user", c.Username)
 		return ErrForbiddenAction
 	case 404:
-		return ErrJobNotFound
+		return ErrNotFound
 	case 405:
 		c.Logger.Errorw("method not allowed", "user", c.Username)
 		return ErrInvalidRequest
@@ -48,8 +42,7 @@ func (c Client) requestError(status int) error {
 		c.Logger.Errorw("action failed", "user", c.Username)
 		return ErrFailedAction
 	default:
-		err := ErrGeneral{User: c.Username}
-		c.Logger.Errorw(err.Error(), "user", c.Username, "status", status)
-		return err
+		c.Logger.Errorw("unknown error", "user", c.Username, "status", status)
+		return ErrGeneral
 	}
 }
