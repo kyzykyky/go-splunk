@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 )
 
 // Basic saved search fields
@@ -12,6 +13,8 @@ type SavedSearch struct {
 	DisabledString     string `json:"-"`
 	Disabled           bool   `json:"disabled,omitempty"`
 	Name               string `json:"name,omitempty"`
+	Updated            string `json:"updated,omitempty"`
+	Owner              string `json:"owner,omitempty"`
 	IsScheduledString  string `json:"-"`
 	IsScheduled        bool   `json:"is_scheduled,omitempty"`
 	Cron               string `json:"cron_schedule,omitempty"`
@@ -104,7 +107,28 @@ func (c Client) SavedSearchGet(searchName string, ns NameSpace) (SavedSearch, er
 		return SavedSearch{}, ErrInvalidResponse
 	}
 
-	content := rawResponse["entry"].([]interface{})[0].(map[string]interface{})["content"].(map[string]interface{})
+	entry, ok := rawResponse["entry"].([]interface{})[0].(map[string]interface{})
+	if !ok {
+		c.Logger.Error("saved search entry error")
+		return SavedSearch{}, ErrInvalidResponse
+	}
+	updated, ok := rawResponse["updated"].(string)
+	if !ok {
+		c.Logger.Error("saved search updated time extraction error")
+		return SavedSearch{}, ErrInvalidResponse
+	}
+
+	id := entry["id"].(string)
+	owner := "nobody"
+	re := regexp.MustCompile(`\/(?P<owner>(\w)+)\/(\w)+\/saved\/searches`)
+	matches := re.FindStringSubmatch(id)
+	for i, v := range re.SubexpNames() {
+		if v == "owner" {
+			owner = matches[i]
+		}
+	}
+
+	content := entry["content"].(map[string]interface{})
 	contentbytes, err := json.Marshal(content)
 	if err != nil {
 		c.Logger.Errorw("saved search post unmarshall error", "error", err.Error())
@@ -117,6 +141,9 @@ func (c Client) SavedSearchGet(searchName string, ns NameSpace) (SavedSearch, er
 		c.Logger.Errorw("saved search unmarshall error", "error", err.Error())
 		return SavedSearch{}, ErrInvalidResponse
 	}
+
+	savedSearch.Updated = updated
+	savedSearch.Owner = owner
 	return savedSearch, nil
 }
 

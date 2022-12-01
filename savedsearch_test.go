@@ -18,6 +18,7 @@ func TestSavedSearch(t *testing.T) {
 		Host:          os.Getenv("SPLUNK_HOST"),
 		Username:      os.Getenv("SPLUNK_ADMIN_USERNAME"),
 		Password:      os.Getenv("SPLUNK_ADMIN_PASSWORD"),
+		App:           os.Getenv("SPLUNK_APP"),
 		EnableLogging: true,
 		Logger:        gosplunk.SimpleLogger{},
 	})
