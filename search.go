@@ -26,7 +26,7 @@ func (c Client) Search(search NewSearch) (SearchJob, error) {
 	if response.StatusCode >= 400 {
 		stresp, err := responseReader(response)
 		if err == nil {
-			c.Logger.Debug(stresp)
+			c.Logger.Debug(string(stresp))
 		}
 		return SearchJob{}, c.requestError(response.StatusCode)
 	}
@@ -57,7 +57,7 @@ func (c Client) JobRetrieve(job string) (JobInfo, error) {
 	if response.StatusCode >= 400 {
 		stresp, err := responseReader(response)
 		if err == nil {
-			c.Logger.Debug(stresp)
+			c.Logger.Debug(string(stresp))
 		}
 		return JobInfo{}, c.requestError(response.StatusCode)
 	}
@@ -131,7 +131,7 @@ func (c Client) JobResults(job SearchJobResultsRetrieve) (JobResults, error) {
 	if response.StatusCode >= 400 {
 		stresp, err := responseReader(response)
 		if err == nil {
-			c.Logger.Debug(stresp)
+			c.Logger.Debug(string(stresp))
 		}
 		return JobResults{}, c.requestError(response.StatusCode)
 	}
@@ -176,7 +176,7 @@ func (c Client) SearchExport(search NewSearch) ([]ExportJobResults, error) {
 	if response.StatusCode >= 400 {
 		stresp, err := responseReader(response)
 		if err == nil {
-			c.Logger.Debug(stresp)
+			c.Logger.Debug(string(stresp))
 		}
 		return []ExportJobResults{}, c.requestError(response.StatusCode)
 	}

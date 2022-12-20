@@ -165,7 +165,7 @@ func (c Client) SavedSearchDelete(searchName string, ns NameSpace) error {
 	if response.StatusCode >= 400 {
 		stresp, err := responseReader(response)
 		if err == nil {
-			c.Logger.Debug(stresp)
+			c.Logger.Debug(string(stresp))
 		}
 		return c.requestError(response.StatusCode)
 	}
