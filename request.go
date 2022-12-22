@@ -55,7 +55,7 @@ func (c Client) requestBuilder(method string, useNs bool, resource string, query
 }
 
 func responseReader(response *http.Response) ([]byte, error) {
-	body := make([]byte, 0)
+	body := make([]byte, response.ContentLength)
 	_, err := io.ReadFull(response.Body, body)
 	if err != nil {
 		return []byte{}, err
