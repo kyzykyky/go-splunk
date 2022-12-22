@@ -1,6 +1,7 @@
 package gosplunk
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -55,12 +56,14 @@ func (c Client) requestBuilder(method string, useNs bool, resource string, query
 }
 
 func responseReader(response *http.Response) ([]byte, error) {
-	body := make([]byte, response.ContentLength)
-	_, err := io.ReadFull(response.Body, body)
+	buf := &bytes.Buffer{}
+	read, err := io.Copy(buf, response.Body)
 	if err != nil {
 		return []byte{}, err
+	} else if read == 0 {
+		return []byte{}, nil
 	}
-	return body, nil
+	return buf.Bytes(), nil
 }
 
 func (search NewSearch) setBody() url.Values {
