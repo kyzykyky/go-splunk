@@ -105,7 +105,7 @@ func Auth(c *Client) (string, error) {
 		return "", ErrRequest
 	}
 
-	response, err := getHttpClient().Do(request)
+	response, err := c.doRequest(request)
 	// TODO: Better error handling
 	if err != nil {
 		c.Logger.Error(err, "user", login.Username)
@@ -142,7 +142,7 @@ func (c Client) Ping() error {
 		c.Logger.Error(err)
 		return ErrRequest
 	}
-	response, err := getHttpClient().Do(request)
+	response, err := c.doRequest(request)
 	if err != nil {
 		c.Logger.Error(err)
 		return ErrRequest

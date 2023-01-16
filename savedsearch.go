@@ -35,7 +35,7 @@ func (c Client) SavedSearchCreate(search SavedSearch, ns NameSpace) error {
 		return ErrRequest
 	}
 
-	response, err := getHttpClient().Do(request)
+	response, err := c.doRequest(request)
 	if err != nil {
 		c.Logger.Error(err)
 		return ErrRequest
@@ -61,7 +61,7 @@ func (c Client) SavedSearchUpdate(search SavedSearch, ns NameSpace) error {
 		c.Logger.Error(err)
 		return ErrRequest
 	}
-	response, err := getHttpClient().Do(request)
+	response, err := c.doRequest(request)
 	if err != nil {
 		c.Logger.Error(err)
 		return ErrRequest
@@ -85,7 +85,7 @@ func (c Client) SavedSearchGet(searchName string, ns NameSpace) (SavedSearch, er
 		c.Logger.Error(err)
 		return SavedSearch{}, ErrRequest
 	}
-	response, err := getHttpClient().Do(request)
+	response, err := c.doRequest(request)
 	if err != nil {
 		c.Logger.Error(err)
 		return SavedSearch{}, ErrRequest
@@ -155,7 +155,7 @@ func (c Client) SavedSearchDelete(searchName string, ns NameSpace) error {
 		c.Logger.Error(err)
 		return ErrRequest
 	}
-	response, err := getHttpClient().Do(request)
+	response, err := c.doRequest(request)
 	if err != nil {
 		c.Logger.Error(err)
 		return ErrRequest

@@ -16,7 +16,7 @@ func (c Client) Search(search NewSearch) (SearchJob, error) {
 		c.Logger.Error(err)
 		return SearchJob{}, ErrRequest
 	}
-	response, err := getHttpClient().Do(request)
+	response, err := c.doRequest(request)
 	if err != nil {
 		c.Logger.Error(err)
 		return SearchJob{}, ErrRequest
@@ -47,7 +47,7 @@ func (c Client) JobRetrieve(job string) (JobInfo, error) {
 		c.Logger.Error(err)
 		return JobInfo{}, ErrRequest
 	}
-	response, err := getHttpClient().Do(request)
+	response, err := c.doRequest(request)
 	if err != nil {
 		c.Logger.Error(err)
 		return JobInfo{}, ErrRequest
@@ -120,8 +120,7 @@ func (c Client) JobResults(job SearchJobResultsRetrieve) (JobResults, error) {
 		c.Logger.Error(err)
 		return JobResults{}, ErrRequest
 	}
-	response, err := getHttpClient().Do(request)
-
+	response, err := c.doRequest(request)
 	if err != nil {
 		c.Logger.Error(err)
 		return JobResults{}, ErrRequest
@@ -166,7 +165,7 @@ func (c Client) SearchExport(search NewSearch) ([]ExportJobResults, error) {
 		c.Logger.Error(err)
 		return []ExportJobResults{}, ErrRequest
 	}
-	response, err := getHttpClient().Do(request)
+	response, err := c.doRequest(request)
 	if err != nil {
 		c.Logger.Error(err)
 		return []ExportJobResults{}, ErrRequest

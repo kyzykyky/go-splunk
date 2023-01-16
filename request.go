@@ -9,15 +9,37 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Default insecure client
-var httpClient *http.Client = &http.Client{Transport: &http.Transport{
-	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-}}
+func getHttpClient() http.Client {
+	return http.Client{Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}}
+}
 
-func getHttpClient() *http.Client {
-	return httpClient
+// Do request and retry if needed
+// Splunk sometimes return EOF error without reason
+func (c Client) doRequest(request *http.Request) (*http.Response, error) {
+	var response *http.Response
+	var err error
+
+	client := getHttpClient()
+	client.Timeout = 10 * time.Second
+	for i := 0; i < 3; i++ {
+		response, err = client.Do(request)
+		if err != nil {
+			if strings.Contains(err.Error(), "EOF") {
+				c.Logger.Debug("request: EOF error, retrying...")
+				continue
+			}
+			c.Logger.Warn("request:", err.Error())
+			continue
+		}
+		break
+	}
+	return response, err
 }
 
 // Build common request for diffrent methods and users
