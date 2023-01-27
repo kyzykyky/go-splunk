@@ -16,6 +16,7 @@ var ErrFailedAction = errors.New("failed action")
 var ErrForbiddenAction = errors.New("forbidden action")
 var ErrConflict = errors.New("conflict")
 var ErrNotFound = errors.New("object not found")
+var ErrParseRegex = errors.New("regex does not match")
 
 func (c Client) requestError(status int) error {
 	switch status {

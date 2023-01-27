@@ -120,8 +120,12 @@ func (c Client) SavedSearchGet(searchName string, ns NameSpace) (SavedSearch, er
 
 	id := entry["id"].(string)
 	owner := "nobody"
-	re := regexp.MustCompile(`\/(?P<owner>(\w)+)\/(\w)+\/saved\/searches`)
+	re := regexp.MustCompile(`\/(?P<owner>([\w\.-])+)\/([\w\.-])+\/saved\/searches`)
 	matches := re.FindStringSubmatch(id)
+	if len(matches) == 0 {
+		return SavedSearch{}, ErrParseRegex
+	}
+
 	for i, v := range re.SubexpNames() {
 		if v == "owner" {
 			owner = matches[i]
