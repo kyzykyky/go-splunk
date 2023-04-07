@@ -47,12 +47,9 @@ func (c Client) requestBuilder(method string, useNs bool, resource string, query
 	if useNs {
 		resource = c.getResourcePrefix() + resource
 	}
-
 	// Add default output_mode to query params
-	query.Add("output_mode", "json")
-
+	query.Add("output_mode", c.OutputMode)
 	endcodedBody := body.Encode()
-
 	u, err := url.ParseRequestURI(c.Host)
 	if err != nil {
 		return nil, err
@@ -91,8 +88,8 @@ func responseReader(response *http.Response) ([]byte, error) {
 func (search NewSearch) setBody() url.Values {
 	data := url.Values{}
 	data.Set("search", search.Search)
-	data.Set("earliest", search.Earliest)
-	data.Set("latest", search.Latest)
+	data.Set("earliest_time", search.Earliest)
+	data.Set("latest_time", search.Latest)
 	return data
 }
 

@@ -126,13 +126,19 @@ func (c Client) JobResults(job SearchJobResultsRetrieve) (JobResults, error) {
 		return JobResults{}, ErrRequest
 	}
 	defer response.Body.Close()
-
 	if response.StatusCode >= 400 {
 		stresp, err := responseReader(response)
 		if err == nil {
 			c.Logger.Debug(string(stresp))
 		}
 		return JobResults{}, c.requestError(response.StatusCode)
+	}
+	for response.StatusCode == 204 {
+		response, err = c.doRequest(request)
+		if err != nil {
+			c.Logger.Error(err)
+		}
+
 	}
 	results := make(map[string]interface{})
 	err = json.NewDecoder(response.Body).Decode(&results)
@@ -171,7 +177,6 @@ func (c Client) SearchExport(search NewSearch) ([]ExportJobResults, error) {
 		return []ExportJobResults{}, ErrRequest
 	}
 	defer response.Body.Close()
-
 	if response.StatusCode >= 400 {
 		stresp, err := responseReader(response)
 		if err == nil {
@@ -198,4 +203,44 @@ func (c Client) SearchExport(search NewSearch) ([]ExportJobResults, error) {
 		}
 	}
 	return exportResults, nil
+}
+
+func (c Client) DownloadJobResults(job SearchJobResultsRetrieve) (string, error) {
+	request, err := c.requestBuilder(http.MethodGet, true, fmt.Sprintf("/search/jobs/%s/results", job.Job),
+		job.setQuery(), url.Values{})
+	if err != nil {
+		c.Logger.Error(err)
+		return "", ErrRequest
+	}
+	response, err := c.doRequest(request)
+	if err != nil {
+		c.Logger.Error(err)
+		return "", ErrRequest
+	}
+
+	defer response.Body.Close()
+
+	bodyBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		c.Logger.Error(err)
+		return "", ErrRequest
+	}
+
+	bodyString := string(bodyBytes)
+
+	if response.StatusCode >= 400 {
+		stresp, err := responseReader(response)
+		if err == nil {
+			c.Logger.Debug(string(stresp))
+		}
+		return "", c.requestError(response.StatusCode)
+	}
+
+	for response.StatusCode == 204 {
+		response, err = c.doRequest(request)
+		if err != nil {
+			c.Logger.Error(err)
+		}
+	}
+	return bodyString, nil
 }

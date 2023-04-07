@@ -15,6 +15,7 @@ type ClientConfig struct {
 	Token         string
 	EnableLogging bool
 	Logger        Logger
+	OutputMode    string
 }
 
 type Client struct {
