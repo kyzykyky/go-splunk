@@ -61,6 +61,7 @@ type ExportJobResults struct {
 	Result  map[string]interface{} `json:"result"`
 	Lastrow bool                   `json:"lastrow"`
 	Offset  int                    `json:"offset"`
+	Sid     string                 `json:"sid"`
 }
 
 type SearchJobResultsRetrieve struct {
@@ -75,4 +76,5 @@ type SearchResults struct {
 	Lastrow  bool                   `json:"lastrow"`
 	Result   map[string]interface{} `json:"result"`
 	Messages []errorMessages        `json:"messages,omitempty"`
+	Sid      string                 `json:"sid"`
 }
