@@ -10,6 +10,7 @@ import (
 type ClientConfig struct {
 	Host          string
 	App           string
+	SubApp        string
 	Username      string
 	Password      string
 	Token         string
@@ -51,6 +52,10 @@ func NewClient(c ClientConfig) (Client, error) {
 	}
 	if !c.EnableLogging {
 		c.Logger = NoLogger{}
+	}
+	if c.OutputMode == "" {
+		// Default output mode
+		c.OutputMode = "json"
 	}
 	if err := C.Ping(); err != nil {
 		return C, err

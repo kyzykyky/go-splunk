@@ -47,7 +47,6 @@ func (c Client) requestBuilder(method string, useNs bool, resource string, query
 	if useNs {
 		resource = c.getResourcePrefix() + resource
 	}
-	// Add default output_mode to query params
 	query.Add("output_mode", c.OutputMode)
 	endcodedBody := body.Encode()
 	u, err := url.ParseRequestURI(c.Host)
